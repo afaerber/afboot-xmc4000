@@ -15,7 +15,7 @@ int main(void)
 	int i;
 
 	// P3.9 -> GPO
-	*P3_IOCR8 &= IOCRn_PCx_MASK << (3 + 8);
+	*P3_IOCR8 &= ~(IOCRn_PCx_MASK << (3 + 8));
 	*P3_IOCR8 |= IOCRn_PCx_GP << (3 + 8);
 	// P3.9 -> strong
 	//*P3_PDR1 &= PDRn_PDx_MASK << 4;
