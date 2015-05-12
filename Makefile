@@ -5,6 +5,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 OBJDUMP = $(CROSS_COMPILE)objdump
 SIZE = $(CROSS_COMPILE)size
 GDB = $(CROSS_COMPILE)gdb
+OPENOCD = openocd
 
 CFLAGS := -mthumb -mcpu=cortex-m4
 CFLAGS += -ffunction-sections -fdata-sections
@@ -30,5 +31,16 @@ test: test.elf Makefile
 clean:
 	@rm -f *.o *.elf *.bin *.lst
 
-flash: test
+flash-jlink: test
 	$(GDB) test.elf -ex "target remote :2331" -ex "monitor reset" -ex "load" -ex "monitor reset" -ex "monitor go"
+
+flash-sdram: test
+	$(OPENOCD) -f interface/jlink.cfg -c "transport select swd" \
+	  -f board/xmc4500-application-kit-sdram.cfg \
+	  -c "init" \
+	  -c "halt" \
+	  -c "flash probe 0" \
+	  -c "flash info 0" \
+	  -c "flash write_image erase test.bin 0x0C000000" \
+	  -c "reset run" \
+	  -c "shutdown"
