@@ -9,6 +9,7 @@ GDB = $(CROSS_COMPILE)gdb
 CFLAGS := -mthumb -mcpu=cortex-m4
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Os -std=gnu99 -Wall
+CFLAGS += -DSDRAM_BOARD
 LDFLAGS := -nostartfiles -Wl,--gc-sections
 
 obj-y += foo.o
