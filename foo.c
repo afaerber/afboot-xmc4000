@@ -20,7 +20,13 @@
 
 #define SCU_PRCLR0_USIC0RS	(1UL << 11)
 
+#define SCU_PRSTAT3_EBURS	(1UL << 2)
+
+#define SCU_PRCLR3_EBURS	(1UL << 2)
+
 #define SCU_CCU_BASE	(SCU_BASE + 0x0600)
+
+#define SCU_CLKSET_EBUCEN	(1UL << 3)
 
 #define SCU_SYSCLKCR_SYSSEL_PLL	(1UL << 16)
 
@@ -105,6 +111,21 @@
 #define USIC_CHx_RBCTR_SIZE_2		(0x1UL << 24)
 #define USIC_CHx_RBCTR_SIZE_MASK	(0x7UL << 24)
 #define USIC_CHx_RBCTR_LOF		(1UL << 28)
+
+#define EBU_BASE	0x58008000
+
+#define EBU_BUSRCONx_FDBKEN		(1UL << 5)
+#define EBU_BUSRCONx_BCGEN_CTRL		(1UL << 20)
+
+#define EBU_BUSWCONx_BCGEN_CTRL		(1UL << 20)
+
+#define EBU_ADDRSELx_REGENAB	(1UL << 0)
+#define EBU_ADDRSELx_ALTENAB	(1UL << 1)
+
+#define EBU_SDRMOD_COLDSTART	(1UL << 15)
+
+#define EBU_SDRMREF_AUTOSELFR	(1UL << 13)
+#define EBU_SDRMREF_ARFSH	(1UL << 24)
 
 #define PORTS_IOCRn_PCx_OUT_PP_GP	0x10UL
 #define PORTS_IOCRn_PCx_OUT_PP_ALT2	0x12UL
@@ -367,6 +388,113 @@ static void usic_putch(char ch)
 	}
 }
 
+#ifdef SDRAM_BOARD
+static void ebu_setup(void)
+{
+	volatile uint32_t *SCU_PRSTAT3  = (void *)(SCU_BASE + 0x0430);
+	volatile uint32_t *SCU_PRCLR3   = (void *)(SCU_BASE + 0x0438);
+	//volatile uint32_t *SCU_CLKSTAT  = (void *)(SCU_BASE + 0x0600);
+	volatile uint32_t *SCU_CLKSET   = (void *)(SCU_BASE + 0x0604);
+	volatile uint32_t *SCU_EBUCLKCR = (void *)(SCU_BASE + 0x061C);
+	volatile uint32_t *EBU_CLC      = (void *)(EBU_BASE + 0x000);
+	volatile uint32_t *EBU_MODCON   = (void *)(EBU_BASE + 0x004);
+	volatile uint32_t *EBU_USERCON  = (void *)(EBU_BASE + 0x00C);
+	volatile uint32_t *EBU_ADDRSEL0 = (void *)(EBU_BASE + 0x018 + 0 * 4);
+	volatile uint32_t *EBU_BUSRCON0 = (void *)(EBU_BASE + 0x028 + 0 * 0x10);
+	volatile uint32_t *EBU_BUSRAP0  = (void *)(EBU_BASE + 0x02C + 0 * 0x10);
+	volatile uint32_t *EBU_BUSWCON0 = (void *)(EBU_BASE + 0x030 + 0 * 0x10);
+	volatile uint32_t *EBU_BUSWAP0  = (void *)(EBU_BASE + 0x034 + 0 * 0x10);
+	volatile uint32_t *EBU_SDRMCON  = (void *)(EBU_BASE + 0x068);
+	volatile uint32_t *EBU_SDRMOD   = (void *)(EBU_BASE + 0x06C);
+	volatile uint32_t *EBU_SDRMREF  = (void *)(EBU_BASE + 0x070);
+	int i;
+
+	*SCU_EBUCLKCR = (1 << 0);
+	*SCU_CLKSET |= SCU_CLKSET_EBUCEN;
+
+	if (*SCU_PRSTAT3 & SCU_PRSTAT3_EBURS) {
+		*SCU_PRCLR3 = SCU_PRCLR3_EBURS;
+		while (*SCU_PRSTAT3 & SCU_PRSTAT3_EBURS) {}
+	}
+
+	*EBU_CLC = 0;
+	*EBU_MODCON = 0x0000FFE0;
+	*EBU_USERCON = (0x1ff << 16);
+
+	for (i = 2; i <= 5; i++) {
+		ports_set_hwsel(0, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(0, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(0, i, 1);
+	}
+	for (i = 7; i <= 8; i++) {
+		ports_set_hwsel(0, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(0, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(0, i, 1);
+	}
+	for (i = 2; i <= 3; i++) {
+		ports_set_hwsel(1, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(1, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(1, i, 1);
+	}
+	for (i = 6; i <= 9; i++) {
+		ports_set_hwsel(1, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(1, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(1, i, 1);
+	}
+	for (i = 12; i <= 15; i++) {
+		ports_set_hwsel(1, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(1, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(1, i, 1);
+	}
+	for (i = 0; i <= 11; i++) {
+		ports_set_hwsel(2, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(2, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(2, i, 1);
+	}
+	for (i = 14; i <= 15; i++) {
+		ports_set_hwsel(2, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(2, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(2, i, 1);
+	}
+	for (i = 1; i <= 1; i++) {
+		ports_set_hwsel(3, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(3, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(3, i, 1);
+	}
+	for (i = 5; i <= 6; i++) {
+		ports_set_hwsel(3, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(3, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(3, i, 1);
+	}
+	for (i = 0; i <= 1; i++) {
+		ports_set_hwsel(4, i, PORTS_HWSEL_HWx_HW1);
+		ports_set_iocr(4, i, PORTS_IOCRn_PCx_OUT_PP_GP);
+		ports_set_pdr(4, i, 1);
+	}
+
+	ports_set_hwsel(3, 2, PORTS_HWSEL_HWx_HW1);
+	ports_set_pdr(3, 2, 1);
+
+	ports_set_hwsel(6, 4, PORTS_HWSEL_HWx_HW0);
+	ports_set_pdr(6, 4, 1);
+	for (i = 3; i <= 5; i++) {
+		ports_set_hwsel(5, i, PORTS_HWSEL_HWx_HW0);
+		ports_set_pdr(5, i, 1);
+	}
+
+	*EBU_SDRMREF |= (0xff << 16);
+	*EBU_BUSRCON0 = (8U << 28) | (1 << 22) | EBU_BUSRCONx_BCGEN_CTRL | (4 << 0);
+	*EBU_BUSWCON0 = (8U << 28) | (1 << 22) | EBU_BUSWCONx_BCGEN_CTRL | (4 << 0);
+	*EBU_BUSRCON0 |= EBU_BUSRCONx_FDBKEN;
+	*EBU_BUSRAP0 = 0xFFF0A4FF;
+	*EBU_BUSWAP0 = 0xFFF0A4FF;
+	*EBU_ADDRSEL0 |= EBU_ADDRSELx_ALTENAB | EBU_ADDRSELx_REGENAB;
+	*EBU_SDRMCON = (0 << 31) | (2 << 22) | (1 << 19) | (5 << 16) | (1 << 14) | (1 << 12) | (1 << 10) | (0 << 8) | (10 << 4) | (3 << 0);
+	*EBU_SDRMOD = EBU_SDRMOD_COLDSTART | (2 << 4) | (0 << 0);
+	*EBU_SDRMREF = (7 << 25) | EBU_SDRMREF_ARFSH | (0xff << 16) | EBU_SDRMREF_AUTOSELFR | (1 << 6) | (63 << 0);
+}
+#endif
+
 int main(void)
 {
 #ifdef SDRAM_BOARD
@@ -374,6 +502,9 @@ int main(void)
 	const int led2_port = 1, led2_pin = 1;
 	volatile uint32_t *PORTS_P1_OMR   = (void *)(0x48028004 + led2_port * 0x100);
 	volatile uint32_t *PORTS_P5_OMR   = (void *)(0x48028004 + led1_port * 0x100);
+	volatile uint32_t *sdram32 = (void *)(0x60000000);
+	//volatile uint16_t *sdram16 = (void *)(0x60000000);
+	volatile uint8_t *sdram8  = (void *)(0x60000000);
 #else
 	const int led_port = 3, led_pin = 9;
 	volatile uint32_t *PORTS_P3_OMR   = (void *)(0x48028004 + led_port * 0x100);
@@ -402,6 +533,19 @@ int main(void)
 	for (i = 0; i < 100; i++) {
 		usic_putch('x');
 	}
+
+#ifdef SDRAM_BOARD
+	ebu_setup();
+	//sdram16[0] = 0xdead;
+	//sdram16[1] = 0xbeef;
+	*sdram32 = 0xdeadbeef;
+	delay(10000);
+	for (i = 0; i < 4; i++) {
+		uint8_t val = sdram8[i];
+		usic_putch(((val >> 4) > 9) ? 'A' + (val >> 4) - 0xA : '0' + (val >> 4));
+		usic_putch(((val & 0xf) > 9) ? 'A' + (val & 0xf) - 0xA : '0' + (val & 0xf));
+	}
+#endif
 
 	while (1) {
 #ifdef SDRAM_BOARD
