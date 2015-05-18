@@ -530,7 +530,7 @@ int main(void)
 	ports_set_hwsel(led_port, led_pin, PORTS_HWSEL_HWx_SW);
 #endif
 
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 1; i++) {
 		usic_putch('x');
 	}
 
@@ -562,6 +562,7 @@ int main(void)
 
 static void noop(void)
 {
+	usic_putch('E');
 	while (1) {
 	}
 }
