@@ -495,6 +495,14 @@ static void ebu_setup(void)
 }
 #endif
 
+static void start_kernel(void)
+{
+	void (*kernel)(uint32_t reserved, uint32_t mach, uint32_t dt)
+		= (void (*)(uint32_t, uint32_t, uint32_t))(0x08008000 | 1);
+
+	kernel(0, ~0UL, 0x08004000);
+}
+
 int main(void)
 {
 #ifdef SDRAM_BOARD
@@ -547,7 +555,7 @@ int main(void)
 	}
 #endif
 
-	while (1) {
+	while (0) {
 #ifdef SDRAM_BOARD
 		*PORTS_P1_OMR = (1 << (16 + led2_pin)) | (1 << led2_pin);
 		*PORTS_P5_OMR = (1 << (16 + led1_pin)) | (1 << led1_pin);
@@ -556,6 +564,8 @@ int main(void)
 #endif
 		delay(1000000);
 	}
+
+	start_kernel();
 
 	return 0;
 }
