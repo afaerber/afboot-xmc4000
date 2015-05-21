@@ -18,6 +18,7 @@
 
 #define SCU_PRSTAT0_USIC0RS	(1UL << 11)
 
+#define SCU_PRCLR0_CCU40RS	(1UL << 2)
 #define SCU_PRCLR0_USIC0RS	(1UL << 11)
 
 #define SCU_PRSTAT3_EBURS	(1UL << 2)
@@ -497,8 +498,11 @@ static void ebu_setup(void)
 
 static void start_kernel(void)
 {
+	volatile uint32_t *SCU_PRCLR0 = (void *)(SCU_BASE + 0x414);
 	void (*kernel)(uint32_t reserved, uint32_t mach, uint32_t dt)
 		= (void (*)(uint32_t, uint32_t, uint32_t))(0x08008000 | 1);
+
+	*SCU_PRCLR0 = SCU_PRCLR0_CCU40RS;
 
 	kernel(0, ~0UL, 0x08004000);
 }
