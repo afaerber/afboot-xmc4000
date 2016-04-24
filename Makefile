@@ -38,7 +38,7 @@ flash-sdram: test
 	$(OPENOCD) -f interface/jlink.cfg -c "transport select swd" \
 	  -f board/xmc4500-application-kit-sdram.cfg \
 	  -c "init" \
-	  -c "halt" \
+	  -c "reset init" \
 	  -c "flash probe 0" \
 	  -c "flash info 0" \
 	  -c "flash write_image erase test.bin 0x0C000000" \
