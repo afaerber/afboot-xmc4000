@@ -516,7 +516,7 @@ int main(void)
 	volatile uint32_t *PORTS_P5_OMR   = (void *)(0x48028004 + led1_port * 0x100);
 	volatile uint32_t *sdram32 = (void *)(0x60000000);
 	//volatile uint16_t *sdram16 = (void *)(0x60000000);
-	volatile uint8_t *sdram8  = (void *)(0x60000000);
+	//volatile uint8_t *sdram8  = (void *)(0x60000000);
 #else
 	const int led_port = 3, led_pin = 9;
 	volatile uint32_t *PORTS_P3_OMR   = (void *)(0x48028004 + led_port * 0x100);
@@ -550,12 +550,15 @@ int main(void)
 	ebu_setup();
 	//sdram16[0] = 0xdead;
 	//sdram16[1] = 0xbeef;
-	*sdram32 = 0xdeadbeef;
-	delay(10000);
+	//*sdram32 = 0xdeadbeef;
+	/*delay(10000);
 	for (i = 0; i < 4; i++) {
 		uint8_t val = sdram8[i];
 		usic_putch(((val >> 4) > 9) ? 'A' + (val >> 4) - 0xA : '0' + (val >> 4));
 		usic_putch(((val & 0xf) > 9) ? 'A' + (val & 0xf) - 0xA : '0' + (val & 0xf));
+	}*/
+	for (i = 0; i < 0x00800000 / sizeof(*sdram32); i++) {
+		sdram32[i] = 0;
 	}
 #endif
 
