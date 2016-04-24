@@ -494,7 +494,6 @@ static void ebu_setup(void)
 	*EBU_SDRMOD = EBU_SDRMOD_COLDSTART | (2 << 4) | (0 << 0);
 	*EBU_SDRMREF = (7 << 25) | EBU_SDRMREF_ARFSH | (0xff << 16) | EBU_SDRMREF_AUTOSELFR | (1 << 6) | (63 << 0);
 }
-#endif
 
 static void start_kernel(void)
 {
@@ -506,6 +505,7 @@ static void start_kernel(void)
 
 	kernel(0, ~0UL, 0x08004000);
 }
+#endif
 
 int main(void)
 {
@@ -572,7 +572,9 @@ int main(void)
 		delay(1000000);
 	}
 
+#ifdef SDRAM_BOARD
 	start_kernel();
+#endif
 
 	return 0;
 }
